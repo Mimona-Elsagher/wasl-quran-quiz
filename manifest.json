@@ -3,18 +3,14 @@
   "short_name": "WaslQuiz",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#F5F5DC",
+  "background_color": "#4B3621",
   "theme_color": "#6F4E37",
   "icons": [
     {
       "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
       "purpose": "any maskable"
-  }
-],
-"display": "standalone",
-"background_color": "#4B3621"
     }
   ]
 }
