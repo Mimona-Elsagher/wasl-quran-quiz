@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Quiz - تطبيق اختبارات القرآن الكريم تفاعلي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+       <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        emeraldDeep: '#072e27',
+                        goldWarm: '#d9a046',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            transition: all 0.5s ease;
+        }
+
+        /* تأثيرات الـ Glassmorphism */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* تنسيق قالب البحر */
+        .theme-ocean {
+            background: linear-gradient(180deg, #0e7490 0%, #0369a1 50%, #1d4ed8 100%) !important;
+            color: #f8fafc !important;
+        }
+
+        .theme-ocean .glass-panel {
+            background: rgba(15, 23, 42, 0.4) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+
+        .theme-ocean h1, .theme-ocean h2, .theme-ocean h3 {
+            color: #38bdf8 !important;
+        }
+
+        /* تأثير الفقاعات لقالب البحر */
+        .bubble {
+            position: absolute;
+            bottom: -50px;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            animation: rise 12s infinite linear;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes rise {
+            0% {
+                bottom: -50px;
+                transform: translateX(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.6;
+            }
+            100% {
+                bottom: 110%;
+                transform: translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* حركة الأسماك */
+        .fish {
+            position: absolute;
+            width: 60px;
+            height: auto;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.8;
+            animation: swim 20s infinite linear;
+        }
+
+        @keyframes swim {
+            0% {
+                left: -80px;
+                transform: translateY(0) scaleX(1);
+            }
+            50% {
+                transform: translateY(50px) scaleX(1);
+            }
+            50.1% {
+                transform: translateY(50px) scaleX(-1);
+            }
+            100% {
+                left: 105%;
+                transform: translateY(0) scaleX(-1);
+            }
+        }
+
+        /* حركات انتقالية ناعمة للبطاقات */
+        .interactive-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .interactive-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        /* اتجاه الأرقام بناء على RTL/LTR */
+        [dir="ltr"] .surah-num {
+            margin-right: auto;
+            margin-left: 0;
+        }
+
+        /* قلب البطاقة التعليمية */
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card-flipped {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden" id="appBody">
+
+    <!-- مؤثرات قالب البحر الشفافة والمتحركة -->
+    <div id="oceanDecorations" class="hidden absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="bubble" style="width: 20px; height: 20px; left: 10%; animation-delay: 0s; animation-duration: 8s;"></div>
+        <div class="bubble" style="width: 40px; height: 40px; left: 30%; animation-delay: 2s; animation-duration: 12s;"></div>
+        <div class="bubble" style="width: 15px; height: 15px; left: 55%; animation-delay: 4s; animation-duration: 7s;"></div>
+        <div class="bubble" style="width: 30px; height: 30px; left: 75%; animation-delay: 1s; animation-duration: 10s;"></div>
+        <div class="bubble" style="width: 25px; height: 25px; left: 90%; animation-delay: 6s; animation-duration: 9s;"></div>
+        
+        <svg class="fish" style="top: 20%; animation-duration: 22s; animation-delay: 0s;" viewBox="0 0 24 24" fill="#38bdf8">
+            <path d="M2,12C2,12 5,6 12,6C17,6 20,9 22,12C20,15 17,18 12,18C5,18 2,12 2,12M20,12C20,11.4 19.6,11 19,11C18.4,11 18,11.4 18,12C18,12.6 18.4,13 19,13C19.6,13 20,12.6 20,12Z"/>
+        </svg>
+        <svg class="fish" style="top: 60%; animation-duration: 16s; animation-delay: 3s;" viewBox="0 0 24 24" fill="#fbbf24">
+            <path d="M2,12C2,12 5,6 12,6C17,6 20,9 22,12C20,15 17,18 12,18C5,18 2,12 2,12M20,12C20,11.4 19.6,11 19,11C18.4,11 18,11.4 18,12C18,12.6 18.4,13 19,13C19.6,13 20,12.6 20,12Z"/>
+        </svg>
+    </div>
+
+    <!-- ترويسة التطبيق -->
+    <header class="sticky top-0 z-50 bg-emeraldDeep text-white px-6 py-4 shadow-lg flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="p-1 rounded-xl bg-white border border-goldWarm/40">
+                <img src="https://i.ibb.co/LznKmbNb/logo.png" alt="Wasl Academy" class="w-12 h-12 rounded-lg object-contain">
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-wide font-cairo" id="headerTitleText">اختبار <span class="text-goldWarm">القرآن</span></h1>
+                <p class="text-xs text-slate-300 font-cairo" id="logoSub">أكاديمية وصل لتعليم القرآن الكريم</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- زر تبديل اللغة التلقائي الكامل -->
+            <button onclick="toggleLanguage()" class="px-4 py-1.5 rounded-full border border-white/20 text-sm flex items-center gap-2 hover:bg-white/10 transition" id="langBtn">
+                <i class="fa-solid fa-globe text-goldWarm"></i>
+                <span id="langText">English</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 pb-32 relative z-10" id="mainDashboard">
+
+        <!-- القسم 0: اختيار المظهر (Theme) -->
+        <section class="mb-10 glass-panel rounded-3xl p-6 shadow-md transition-all">
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2" id="titleTheme">
+                <i class="fa-solid fa-palette text-goldWarm"></i> اختر قالب الاختبار
+            </h2>
+            <p class="text-sm text-slate-500 mb-6" id="descTheme">اختر المظهر الهادئ الافتراضي، أو المظهر المائي التفاعلي المليء بالفقاعات والأسماك المتحركة.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- القالب العادي -->
+                <div id="themeCardPlain" onclick="selectTheme('plain')" class="interactive-card cursor-pointer rounded-2xl border-4 border-goldWarm bg-white p-5 flex flex-col justify-between h-40 shadow-sm relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-semibold" id="themePlainTag">افتراضي</span>
+                        <div class="w-6 h-6 rounded-full bg-goldWarm flex items-center justify-center text-white" id="plainTick">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-emeraldDeep" id="plainTitleText">القالب العادي</h3>
+                        <p class="text-xs text-slate-500" id="plainDescText">مظهر كلاسيكي مريح وهادئ للتركيز التام.</p>
+                    </div>
+                </div>
+
+                <!-- قالب البحر -->
+                <div id="themeCardOcean" onclick="selectTheme('ocean')" class="interactive-card cursor-pointer rounded-2xl border-2 border-slate-200 bg-gradient-to-r from-cyan-500 to-blue-600 p-5 flex flex-col justify-between h-40 shadow-sm relative overflow-hidden text-white">
+                    <div class="absolute inset-0 bg-black/10 z-0"></div>
+                    <div class="flex justify-between items-start relative z-10">
+                        <span class="bg-cyan-400/30 text-white px-3 py-1 rounded-full text-xs font-semibold" id="themeOceanTag">متحرك</span>
+                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 hidden" id="oceanTick">
+                            <i class="fa-solid fa-check text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="font-bold text-lg text-cyan-100" id="oceanTitleText">القالب المائي</h3>
+                        <p class="text-xs text-cyan-200" id="oceanDescText">ثيم مائي حيوي ومتحرك للأطفال والناشئة.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- القسم 1: اختيار نمط وأساليب الأسئلة التفاعلية -->
+        <section class="mb-10 glass-panel rounded-3xl p-6 shadow-md">
+            <h2 class="text-xl font-bold mb-2 flex items-center gap-2" id="titleQTypes">
+                <i class="fa-solid fa-circle-question text-goldWarm"></i> ١. اختر نوع الأسئلة
+            </h2>
+            <p class="text-sm text-slate-500 mb-6" id="descQTypes">يمكنك اختيار نوع واحد أو عدة أنواع من الأسئلة معاً لإنشاء اختبار تفاعلي ممتع ومختلف في كل مرة.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="qTypesContainer">
+                <!-- بطاقات التلاوة التفاعلية -->
+                <div onclick="toggleQuestionType('flashcards')" id="card-flashcards" class="interactive-card cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 flex items-center gap-4 shadow-sm relative">
+                    <div class="w-14 h-14 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-base text-slate-800" id="card-flashcards-title">بطاقات التلاوة التفاعلية</h3>
+                        <p class="text-xs text-slate-400" id="card-flashcards-desc">بطاقات تفاعلية لتلاوة وتفسير الآيات</p>
+                    </div>
+                    <div class="checkbox-indicator w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-white">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- الاستماع والتوصيل -->
+                <div onclick="toggleQuestionType('listen_match')" id="card-listen_match" class="interactive-card cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 flex items-center gap-4 shadow-sm relative">
+                    <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-ear-listen"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-base text-slate-800" id="card-listen_match-title">الاستماع والتوصيل</h3>
+                        <p class="text-xs text-slate-400" id="card-listen_match-desc">استمع للتلاوة واختر الآية الصحيحة</p>
+                    </div>
+                    <div class="checkbox-indicator w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-white">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- ملء الفراغ -->
+                <div onclick="toggleQuestionType('fill_blank')" id="card-fill_blank" class="interactive-card cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 flex items-center gap-4 shadow-sm relative">
+                    <div class="w-14 h-14 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-pen-clip"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-base text-slate-800" id="card-fill_blank-title">ملء الفراغ</h3>
+                        <p class="text-xs text-slate-400" id="card-fill_blank-desc">أكمل الفراغ بالكلمة القرآنية الناقصة</p>
+                    </div>
+                    <div class="checkbox-indicator w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-white">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- ترتيب الكلمات -->
+                <div onclick="toggleQuestionType('order_words')" id="card-order_words" class="interactive-card cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 flex items-center gap-4 shadow-sm relative">
+                    <div class="w-14 h-14 rounded-xl bg-teal-50 text-teal-500 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-arrow-down-a-z"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-base text-slate-800" id="card-order_words-title">ترتيب الكلمات</h3>
+                        <p class="text-xs text-slate-400" id="card-order_words-desc">رتب كلمات الآية المبعثرة بالترتيب الصحيح</p>
+                    </div>
+                    <div class="checkbox-indicator w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-white">
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- القسم 2 و 3: إعداد عدد الأسئلة وتحديد القارئ المرتل -->
+        <section class="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- تحديد عدد الأسئلة -->
+            <div class="glass-panel rounded-3xl p-6 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-1 flex items-center gap-2" id="titleQCount">
+                        <i class="fa-solid fa-list-ol text-goldWarm"></i> ٢. عدد الأسئلة
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4" id="descQCount">اختر كم عدد الأسئلة التي ترغب في تشغيلها خلال الاختبار الحالي.</p>
+                </div>
+                <select id="questionsCountSelect" onchange="updateReviews()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-semibold text-slate-700 outline-none focus:border-goldWarm">
+                    <!-- الخيارات سيتم توليدها برمجياً لضمان ترجمتها بالكامل -->
+                </select>
+            </div>
+
+            <!-- تحديد القارئ -->
+            <div class="glass-panel rounded-3xl p-6 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-1 flex items-center gap-2" id="titleReciter">
+                        <i class="fa-solid fa-microphone-lines text-goldWarm"></i> ٣. اختيار القارئ
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-4" id="descReciter">اختر صوت القارئ المفضل لتشغيل الملفات الصوتية للآيات.</p>
+                </div>
+                <select id="reciterSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 font-semibold text-slate-700 outline-none focus:border-goldWarm">
+                    <!-- الخيارات سيتم توليدها برمجياً لضمان ترجمتها بالكامل -->
+                </select>
+            </div>
+        </section>
+
+        <!-- القسم 4: تحديد السور المطلوبة للاختبار المباشر -->
+        <section class="mb-10 glass-panel rounded-3xl p-6 shadow-md">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-xl font-bold flex items-center gap-2" id="titleSurahs">
+                        <i class="fa-solid fa-bookmark text-goldWarm"></i> ٤. اختر السور
+                    </h2>
+                    <p class="text-sm text-slate-500" id="descSurahs">اختر السور التي تريد أن يتم توليد أسئلة الاختبار العشوائية منها.</p>
+                </div>
+                
+                <!-- التحكم السريع -->
+                <div class="flex items-center gap-2">
+                    <button onclick="selectAllSurahs()" class="px-4 py-2 bg-emeraldDeep/10 text-emeraldDeep hover:bg-emeraldDeep/20 text-xs font-bold rounded-lg transition" id="btnSelectAll">تحديد الكل</button>
+                    <button onclick="clearAllSurahs()" class="px-4 py-2 bg-rose-100 text-rose-600 hover:bg-rose-200 text-xs font-bold rounded-lg transition" id="btnClear">تفريغ</button>
+                </div>
+            </div>
+
+            <!-- شريط البحث المباشر -->
+            <div class="relative mb-6">
+                <i class="fa-solid fa-magnifying-glass absolute top-3.5 right-4 text-slate-400" id="searchIcon"></i>
+                <input type="text" id="surahSearchInput" onkeyup="filterSurahs()" placeholder="ابحث باسم السورة..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pr-11 pl-4 py-3 text-slate-700 outline-none focus:border-goldWarm font-cairo">
+            </div>
+
+            <!-- واجهة تحميل السور حياً من الـ API -->
+            <div id="surahsLoading" class="flex flex-col items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-10 w-10 border-4 border-goldWarm border-t-transparent mb-3"></div>
+                <p class="text-sm text-slate-500 font-cairo" id="loadingText">جاري تحميل سور القرآن من الخادم السحابي...</p>
+            </div>
+            
+            <div id="surahsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-2 hidden">
+                <!-- يتم ملؤها حياً برمجياً -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- شريط مراجعة وتأكيد البدء السفلي العائم -->
+    <div id="floatingReviewWidget" class="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] p-4 transition-all duration-300">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
+                <div class="bg-amber-50 rounded-xl p-3 text-amber-600 border border-amber-100 flex items-center justify-center text-xl hidden md:flex">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <div>
+                    <h4 class="font-extrabold text-sm text-slate-800 font-cairo" id="widgetTitle">راجع مراجعتك قبل البدء</h4>
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-xs">
+                        <span class="text-slate-500"><span id="widgetSurahsLabel">السور المحددة:</span> <strong class="text-emeraldDeep font-bold" id="widgetSurahsCount">0 سورة</strong></span>
+                        <span class="text-slate-500"><span id="widgetQTypesLabel">أنواع الأسهم:</span> <strong class="text-emeraldDeep font-bold" id="widgetQTypesCount">0 أنواع</strong></span>
+                        <span class="text-slate-500"><span id="widgetCountLabel">إجمالي الأسئلة:</span> <strong class="text-emeraldDeep font-bold" id="widgetTotalCount">10 أسئلة</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startQuiz()" class="w-full md:w-auto bg-emeraldDeep text-white font-extrabold px-10 py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg hover:bg-emeraldDeep/90 transition transform hover:scale-[1.02] active:scale-[0.98]">
+                <i class="fa-solid fa-play text-goldWarm"></i>
+                <span id="btnStartQuizText">ابدأ الاختبار الفوري</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- واجهة الاختبار الفعلي الحية (شاشة كاملة) -->
+    <div id="quizScreen" class="fixed inset-0 z-50 bg-slate-50 overflow-y-auto hidden">
+        <div class="absolute inset-0 bg-cover bg-center opacity-5 pointer-events-none" style="background-image: url('https://placehold.co/1920x1080/064e3b/ffffff?text=Wasl+Academy');"></div>
+        
+        <!-- ترويسة شاشة الاختبار -->
+        <header class="sticky top-0 z-50 bg-emeraldDeep text-white px-6 py-4 shadow-md flex items-center justify-between">
+            <button onclick="exitQuizPrompt()" class="text-white hover:text-rose-400 font-bold flex items-center gap-2 text-sm transition">
+                <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
+                <span id="btnExit">إنهاء الاختبار</span>
+            </button>
+            <div class="text-center">
+                <h2 class="font-bold font-cairo text-base" id="quizHeaderTitle">اختبار القرآن الكريم</h2>
+                <div class="w-32 bg-slate-700/60 h-1.5 rounded-full mt-1.5 overflow-hidden mx-auto">
+                    <div id="quizGlobalProgress" class="bg-goldWarm h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+            <div class="bg-white/10 px-4 py-1.5 rounded-xl font-bold text-sm text-goldWarm">
+                <span id="quizScoreText">الدرجة:</span> <span id="liveScore">0</span>
+            </div>
+        </header>
+
+        <!-- ساحة الأسئلة والتفاعل -->
+        <div class="max-w-2xl mx-auto px-4 py-8 relative z-10 min-h-[calc(100vh-140px)] flex flex-col justify-between">
+            
+            <div id="quizArena" class="w-full flex-1 flex flex-col justify-center">
+                <div class="glass-panel rounded-3xl p-6 shadow-xl border border-slate-200 relative mb-8">
+                    <!-- مؤشرات الخطوات الحالية ونوع السؤال -->
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-xs bg-emeraldDeep/10 text-emeraldDeep px-3 py-1.5 rounded-full font-bold" id="questionStepIndicator">سؤال 1 من 10</span>
+                        <span class="text-xs bg-goldWarm/10 text-goldWarm px-3 py-1.5 rounded-full font-bold" id="questionTypeIndicator">إستمع واختر</span>
+                    </div>
+
+                    <!-- عنصر الصوت السحابي -->
+                    <audio id="ayahAudio" class="hidden"></audio>
+
+                    <!-- الحاويات الديناميكية للأسئلة -->
+                    <div id="questionContent" class="py-4">
+                        <!-- تُبنى برمجياً بالكامل بناءً على نوع السؤال المولد -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- لوحة التحكم السفلية داخل الاختبار -->
+            <div class="flex justify-between items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <button id="audioPlaybackBtn" onclick="playCurrentAyah()" class="w-12 h-12 rounded-2xl bg-goldWarm text-white shadow-md flex items-center justify-center text-xl hover:scale-105 transition active:scale-95 hidden">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <p class="text-xs text-slate-400 hidden" id="audioPlaybackHint">انقر للاستماع مرة أخرى</p>
+                </div>
+                
+                <button id="nextQuestionBtn" onclick="loadNextQuestion()" class="bg-emeraldDeep text-white font-extrabold px-8 py-3.5 rounded-2xl flex items-center gap-2 shadow-lg hover:bg-emeraldDeep/90 transition transform hover:scale-[1.02] active:scale-[0.98] opacity-50 cursor-not-allowed" disabled>
+                    <span id="btnNextText">السؤال التالي</span>
+                    <i class="fa-solid fa-arrow-left" id="btnNextIcon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- صندوق رسائل التحقق والتنبيهات المخصص (بديل الـ Alert) -->
+    <div id="messageOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden px-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
+            <div id="messageIcon" class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 mx-auto flex items-center justify-center text-3xl mb-4">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 id="messageTitle" class="text-lg font-bold text-slate-800 mb-2">ممتاز!</h3>
+            <p id="messageText" class="text-sm text-slate-500 mb-6">لقد تم التحقق من الإجابة بشكل صحيح.</p>
+            <button onclick="closeMessageOverlay()" class="w-full bg-emeraldDeep text-white py-3 rounded-xl font-bold hover:bg-emeraldDeep/90 transition" id="btnMsgClose">حسناً</button>
+        </div>
+    </div>
+
+    <!-- صندوق تأكيد الخروج التفاعلي المخصص (بديل الـ Confirm) -->
+    <div id="confirmOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 hidden px-4">
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center text-3xl mb-4">
+                <i class="fa-solid fa-circle-question"></i>
+            </div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-slate-800 mb-2">هل تريد بالتأكيد؟</h3>
+            <p id="confirmText" class="text-sm text-slate-500 mb-6">هل تريد إنهاء الاختبار والعودة للرئيسية؟</p>
+            <div class="flex gap-3">
+                <button onclick="confirmExitAction(true)" class="flex-1 bg-rose-600 text-white py-3 rounded-xl font-bold hover:bg-rose-700 transition" id="btnConfirmYes">نعم، إنهاء</button>
+                <button onclick="confirmExitAction(false)" class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-200 transition" id="btnConfirmNo">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- شاشة احتفالية إعلان النتائج الإجمالية والنهائية -->
+    <div id="celebrationScreen" class="fixed inset-0 z-50 bg-slate-50 overflow-y-auto hidden flex flex-col items-center justify-center px-4 py-8">
+        <div class="max-w-md w-full glass-panel rounded-3xl p-8 shadow-2xl text-center relative overflow-hidden border border-slate-200">
+            <div class="absolute -top-10 -left-10 w-40 h-40 bg-goldWarm/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-emeraldDeep/10 rounded-full blur-2xl"></div>
+            
+            <div class="text-6xl text-goldWarm mb-6 animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <h2 class="text-2xl font-black text-slate-800 mb-2 font-cairo" id="resultsTitle">مبارك! أكملت الاختبار بنجاح</h2>
+            <p class="text-sm text-slate-500 mb-6" id="resultsDesc">سعداء بجهدك ومثابرتك في رحلتك لضبط تلاوة كتاب الله الكريم.</p>
+            
+            <!-- شبكة عرض تفاصيل النتائج -->
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-emeraldDeep/5 rounded-2xl p-4 border border-emeraldDeep/10">
+                    <span class="text-xs text-slate-400 block" id="cardCorrectText">الإجابات الصحيحة</span>
+                    <strong class="text-2xl font-black text-emeraldDeep" id="celebrationCorrectCount">0</strong>
+                </div>
+                <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100">
+                    <span class="text-xs text-slate-400 block" id="cardTotalScoreText">إجمالي الدرجات</span>
+                    <strong class="text-2xl font-black text-goldWarm" id="celebrationPercentage">0%</strong>
+                </div>
+            </div>
+
+            <!-- أزرار الإجراءات الاحتفالية -->
+            <div class="flex flex-col gap-3">
+                <button onclick="restartSettings()" class="w-full bg-emeraldDeep text-white font-extrabold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg hover:bg-emeraldDeep/90 transition">
+                    <i class="fa-solid fa-rotate-left text-goldWarm"></i>
+                    <span id="btnRestart">اختبار جديد</span>
+                </button>
+                <button onclick="exitQuizToHome()" class="w-full bg-slate-200 text-slate-700 font-extrabold py-4 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-300 transition">
+                    <i class="fa-solid fa-house"></i>
+                    <span id="btnBackHome">الرئيسية</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -------------------------------------------------------------
+        // قواميس الترجمات الكاملة والتلقائية (خالية من أي تداخل لغوي)
+        // -------------------------------------------------------------
+        const translations = {
+            ar: {
+                langBtn: 'English',
+                logoSub: 'أكاديمية وصل لتعليم القرآن الكريم',
+                headerTitleText: 'اختبار <span class="text-goldWarm">القرآن</span>',
+                titleTheme: 'اختر قالب الاختبار',
+                descTheme: 'اختر المظهر الهادئ الافتراضي، أو المظهر المائي التفاعلي المليء بالفقاعات والأسماك المتحركة.',
+                
+                themePlainTag: 'افتراضي',
+                themePlainTitle: 'القالب العادي',
+                themePlainDesc: 'مظهر كلاسيكي مريح وهادئ للتركيز التام.',
+                themeOceanTag: 'متحرك',
+                themeOceanTitle: 'القالب المائي',
+                themeOceanDesc: 'ثيم مائي حيوي ومتحرك للأطفال والناشئة.',
+
+                titleQTypes: '١. اختر نوع الأسئلة',
+                descQTypes: 'يمكنك اختيار نوع واحد أو عدة أنواع من الأسئلة معاً لإنشاء اختبار تفاعلي ممتع ومختلف في كل مرة.',
+                qTypeFlashcardsTitle: 'بطاقات التلاوة التفاعلية',
+                qTypeFlashcardsDesc: 'بطاقات تفاعلية لتلاوة وتفسير الآيات',
+                qTypeListenMatchTitle: 'الاستماع والتوصيل',
+                qTypeListenMatchDesc: 'استمع للتلاوة واختر الآية الصحيحة',
+                qTypeFillBlankTitle: 'ملء الفراغ',
+                qTypeFillBlankDesc: 'أكمل الفراغ بالكلمة القرآنية الناقصة',
+                qTypeOrderWordsTitle: 'ترتيب الكلمات',
+                qTypeOrderWordsDesc: 'رتب كلمات الآية المبعثرة بالترتيب الصحيح',
+
+                titleQCount: '٢. عدد الأسئلة',
+                descQCount: 'اختر كم عدد الأسئلة التي ترغب في تشغيلها خلال الاختبار الحالي.',
+                qCountOption: 'أسئلة',
+                titleReciter: '٣. اختيار القارئ',
+                descReciter: 'اختر صوت القارئ المفضل لتشغيل الملفات الصوتية للآيات.',
+                reciterHusary: 'محمود خليل الحصري',
+                reciterMinshawi: 'محمد صديق المنشاوي',
+                reciterAlafasy: 'مشاري بن راشد العفاسي',
+                reciterAbduBasit: 'عبد الباسط عبد الصمد',
+
+                titleSurahs: '٤. اختر السور',
+                descSurahs: 'اختر السور التي تريد أن يتم توليد أسئلة الاختبار العشوائية منها.',
+                btnSelectAll: 'تحديد الكل',
+                btnClear: 'تفريغ الكل',
+                surahSearchInput: 'ابحث باسم السورة...',
+                loadingText: 'جاري تحميل سور القرآن من الخادم السحابي...',
+                ayahsUnit: 'آية',
+
+                widgetTitle: 'راجع مراجعتك قبل البدء',
+                widgetSurahsLabel: 'السور المحددة:',
+                widgetQTypesLabel: 'أنواع الأسئلة:',
+                widgetCountLabel: 'إجمالي الأسئلة:',
+                btnStartQuizText: 'ابدأ الاختبار الفوري',
+
+                btnExit: 'إنهاء الاختبار',
+                quizHeaderTitle: 'اختبار القرآن الكريم',
+                quizScoreText: 'الدرجة:',
+                audioPlaybackHint: 'انقر للاستماع مرة أخرى',
+                btnNextText: 'السؤال التالي',
+                btnMsgClose: 'حسناً',
+
+                confirmTitle: 'هل أنت متأكد؟',
+                confirmText: 'هل تريد إنهاء الاختبار والعودة للقائمة الرئيسية؟',
+                btnConfirmYes: 'نعم، إنهاء',
+                btnConfirmNo: 'إلغاء',
+
+                resultsTitle: 'مبارك! أكملت الاختبار بنجاح',
+                resultsDesc: 'سعداء بجهدك ومثابرتك في رحلتك لضبط تلاوة كتاب الله الكريم.',
+                cardCorrectText: 'الإجابات الصحيحة',
+                cardTotalScoreText: 'إجمالي الدرجات',
+                btnRestart: 'اختبار جديد',
+                btnBackHome: 'الرئيسية',
+
+                labelFlashcard: 'بطاقة آية تفاعلية',
+                labelListenMatch: 'استمع واختر الآية الصحيحة',
+                labelFillBlank: 'أكمل الكلمة القرآنية الناقصة',
+                labelOrderWords: 'رتب كلمات الآية الكريمة',
+                flashcardFront: 'الوجه الأمامي',
+                flashcardBack: 'الوجه الخلفي',
+                flashcardFlipHint: 'اضغط لقلب البطاقة',
+                flashcardGotIt: 'حفظتها',
+                flashcardReview: 'تحتاج مراجعة',
+                flashcardBackExplanation: 'هذه الآية الكريمة تعلمنا عظمة كتاب الله وأهمية التفكر والتدبر في آياته والالتزام بأحكامه.',
+                listenMatchHelper: 'انقر على المشغل بالأعلى، ثم اختر الآية الصحيحة المطابقة للصوت.',
+                fillBlankHelper: 'أكمل الفراغ بالكلمة القرآنية المتممة للمعنى الصحيح للآية:',
+                orderWordsHelper: 'اضغط على الكلمات بالترتيب الصحيح لتكوين الآية الكريمة المترابطة المعنى:',
+                orderWordsHint: 'الكلمات ستظهر هنا بالترتيب...',
+                orderWordsCheck: 'تأكيد الترتيب والتحقق',
+
+                alertTitle: 'تنبيه',
+                alertQTypesReq: 'يجب عليك اختيار نوع أسئلة واحد على الأقل للاختبار.',
+                alertSurahReq: 'الرجاء اختيار سورة واحدة على الأقل قبل البدء!',
+                loaderTitle: 'جاري بناء الاختبار...',
+                loaderDesc: 'نقوم بسحب الآيات وترتيبها من السحابة خصيصاً لك...',
+                errorTitle: 'فشل الاتصال',
+                errorDesc: 'حدث خطأ أثناء تحميل الآيات. تأكد من جودة الإنترنت وحاول مجدداً.',
+                flashcardSuccessTitle: 'أحسنت!',
+                flashcardSuccessDesc: 'تم إضافتها إلى حصيلتك الذهبية وحفظك.',
+                flashcardWarningTitle: 'تنبيه الحفظ',
+                flashcardWarningDesc: 'تم تمييز الآية للمراجعة في نهاية جلستك.',
+                genericCorrectTitle: 'إجابة صحيحة!',
+                genericCorrectDesc: 'بارك الله فيك، إجابة متميزة ومطابقة للمصحف الشريف.',
+                genericWrongTitle: 'إجابة خاطئة',
+                genericWrongDesc: 'الرجاء المحاولة بتركيز أكبر في المرة القادمة.',
+                fillBlankWrongDesc: 'الكلمة الصحيحة المفقودة هي:',
+                correctOrderIs: 'الترتيب الصحيح هو:'
+            },
+            en: {
+                langBtn: 'العربية',
+                logoSub: 'Wasl Academy for Holy Quran Education',
+                headerTitleText: 'Quran <span class="text-goldWarm">Quiz</span>',
+                titleTheme: 'Pick a Quiz Theme',
+                descTheme: 'Choose our clean default plain look, or pick the beautiful ocean theme with interactive swimming fish.',
+                
+                themePlainTag: 'Default',
+                themePlainTitle: 'PLAIN THEME',
+                themePlainDesc: 'Classic, calm look for complete focus.',
+                themeOceanTag: 'Animated',
+                themeOceanTitle: 'OCEAN THEME',
+                themeOceanDesc: 'Vibrant animated water look for kids and youth.',
+
+                titleQTypes: '1. Select Question Types',
+                descQTypes: 'Choose one or multiple question styles to create a unique and customized learning challenge.',
+                qTypeFlashcardsTitle: 'Ayah Flashcards',
+                qTypeFlashcardsDesc: 'Interactive cards to recite and interpret verses.',
+                qTypeListenMatchTitle: 'Listen & Match',
+                qTypeListenMatchDesc: 'Listen to recitation and match the correct verse.',
+                qTypeFillBlankTitle: 'Fill in the Blank',
+                qTypeFillBlankDesc: 'Fill in the blank with the missing Quranic word.',
+                qTypeOrderWordsTitle: 'Order the Words',
+                qTypeOrderWordsDesc: 'Reorder the scattered words of the verse correctly.',
+
+                titleQCount: '2. Questions per Quiz',
+                descQCount: 'Determine the number of questions you want in this test session.',
+                qCountOption: 'Questions',
+                titleReciter: '3. Select Reciter',
+                descReciter: 'Pick your preferred reciter to listen to the live Ayah audio clips.',
+                reciterHusary: 'Mahmoud Khalil Al-Husary',
+                reciterMinshawi: 'Mohamed Siddiq Al-Minshawi',
+                reciterAlafasy: 'Mishary Rashid Alafasy',
+                reciterAbduBasit: 'Abdul Basit Abdul Samad',
+
+                titleSurahs: '4. Select Surahs',
+                descSurahs: 'Select which Surahs the dynamic questions should be pulled from.',
+                btnSelectAll: 'Select All',
+                btnClear: 'Clear All',
+                surahSearchInput: 'Search Surah...',
+                loadingText: 'Loading Quranic Surahs from cloud server...',
+                ayahsUnit: 'Ayahs',
+
+                widgetTitle: 'Review your options before starting',
+                widgetSurahsLabel: 'Selected Surahs:',
+                widgetQTypesLabel: 'Question Styles:',
+                widgetCountLabel: 'Total Questions:',
+                btnStartQuizText: 'Start Live Quiz',
+
+                btnExit: 'Exit Quiz',
+                quizHeaderTitle: 'Holy Quran Live Quiz',
+                quizScoreText: 'Score:',
+                audioPlaybackHint: 'Click to play audio again',
+                btnNextText: 'Next Question',
+                btnMsgClose: 'OK',
+
+                confirmTitle: 'Are you sure?',
+                confirmText: 'Do you want to end this quiz and return to the main dashboard?',
+                btnConfirmYes: 'Yes, Exit',
+                btnConfirmNo: 'Cancel',
+
+                resultsTitle: 'Congratulations! You Done It!',
+                resultsDesc: 'We are incredibly proud of your journey in mastering and connecting with the Holy Quran.',
+                cardCorrectText: 'Correct Answers',
+                cardTotalScoreText: 'Final Score',
+                btnRestart: 'Start New Quiz',
+                btnBackHome: 'Go to Dashboard',
+
+                labelFlashcard: 'Ayah Flashcard Challenge',
+                labelListenMatch: 'Listen & Match The Verse',
+                labelFillBlank: 'Fill in the Blank Word',
+                labelOrderWords: 'Order the scattered words',
+                flashcardFront: 'Front Side',
+                flashcardBack: 'Back Side',
+                flashcardFlipHint: 'Tap to Flip Card',
+                flashcardGotIt: 'Got It',
+                flashcardReview: 'Needs Review',
+                flashcardBackExplanation: 'This blessed verse teaches us the greatness of Allah\'s book, the importance of reflection, and commitment to its principles.',
+                listenMatchHelper: 'Click the player above, then choose the correct verse matching the audio.',
+                fillBlankHelper: 'Fill in the blank with the correct Quranic word that completes the meaning:',
+                orderWordsHelper: 'Click the words in the correct order to form the coherent Quranic verse:',
+                orderWordsHint: 'Words will appear here in order...',
+                orderWordsCheck: 'Confirm Order and Check',
+
+                alertTitle: 'Warning',
+                alertQTypesReq: 'You must select at least one question type for the quiz.',
+                alertSurahReq: 'Please select at least one Surah before starting!',
+                loaderTitle: 'Generating Quiz...',
+                loaderDesc: 'Fetching verses and audio configurations live from cloud...',
+                errorTitle: 'Connection Failure',
+                errorDesc: 'An error occurred while fetching data. Check your connection and retry.',
+                flashcardSuccessTitle: 'Great job!',
+                flashcardSuccessDesc: 'This has been added to your savings and mastered list.',
+                flashcardWarningTitle: 'Revision Marked',
+                flashcardWarningDesc: 'This verse has been marked for revision at the end of your session.',
+                genericCorrectTitle: 'Correct Answer!',
+                genericCorrectDesc: 'Well done! A perfect answer matching the Holy Quran text.',
+                genericWrongTitle: 'Incorrect Answer',
+                genericWrongDesc: 'Please try with more focus next time.',
+                fillBlankWrongDesc: 'The correct missing word is:',
+                correctOrderIs: 'The correct order is:'
+            }
+        };
+
+        // -------------------------------------------------------------
+        // متغيرات حالة التطبيق الأساسية
+        // -------------------------------------------------------------
+        let currentLang = 'ar';
+        let currentTheme = 'plain';
+        let selectedQuestionTypes = ['listen_match', 'fill_blank']; 
+        let selectedSurahs = [];
+        let allSurahsList = []; 
+        let quizQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isQuestionAnswered = false;
+
+        window.onload = async function() {
+            initApp();
+            await fetchSurahsFromAPI();
+        };
+
+        // -------------------------------------------------------------
+        // تهيئة وإعدادات واجهة المستخدم واللغة التلقائية الكاملة
+        // -------------------------------------------------------------
+        function initApp() {
+            selectTheme('plain');
+            applyLanguageTranslations();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = currentLang;
+            
+            applyLanguageTranslations();
+            renderSurahsGrid();
+        }
+
+        function applyLanguageTranslations() {
+            const dict = translations[currentLang];
+            
+            // تحديث نصوص الترويسة والعنوان الرئيسي والفرعي
+            document.getElementById('langText').innerText = dict.langBtn;
+            document.getElementById('headerTitleText').innerHTML = dict.headerTitleText;
+            document.getElementById('logoSub').innerText = dict.logoSub;
+            document.title = currentLang === 'ar' ? 'Quran Quiz - تطبيق اختبارات القرآن الكريم تفاعلي' : 'Quran Quiz - Interactive Holy Quran Testing App';
+
+            // تحديث نصوص اختيار المظهر
+            document.getElementById('titleTheme').innerHTML = `<i class="fa-solid fa-palette text-goldWarm"></i> ${dict.titleTheme}`;
+            document.getElementById('descTheme').innerText = dict.descTheme;
+            document.getElementById('themePlainTag').innerText = dict.themePlainTag;
+            document.getElementById('plainTitleText').innerText = dict.themePlainTitle;
+            document.getElementById('plainDescText').innerText = dict.themePlainDesc;
+            document.getElementById('themeOceanTag').innerText = dict.themeOceanTag;
+            document.getElementById('oceanTitleText').innerText = dict.themeOceanTitle;
+            document.getElementById('oceanDescText').innerText = dict.themeOceanDesc;
+
+            // تحديث أنماط الأسئلة
+            document.getElementById('titleQTypes').innerHTML = `<i class="fa-solid fa-circle-question text-goldWarm"></i> ${dict.titleQTypes}`;
+            document.getElementById('descQTypes').innerText = dict.descQTypes;
+            document.getElementById('card-flashcards-title').innerText = dict.qTypeFlashcardsTitle;
+            document.getElementById('card-flashcards-desc').innerText = dict.qTypeFlashcardsDesc;
+            document.getElementById('card-listen_match-title').innerText = dict.qTypeListenMatchTitle;
+            document.getElementById('card-listen_match-desc').innerText = dict.qTypeListenMatchDesc;
+            document.getElementById('card-fill_blank-title').innerText = dict.qTypeFillBlankTitle;
+            document.getElementById('card-fill_blank-desc').innerText = dict.qTypeFillBlankDesc;
+            document.getElementById('card-order_words-title').innerText = dict.qTypeOrderWordsTitle;
+            document.getElementById('card-order_words-desc').innerText = dict.qTypeOrderWordsDesc;
+
+            // تحديث خيارات التعداد والقراء
+            document.getElementById('titleQCount').innerHTML = `<i class="fa-solid fa-list-ol text-goldWarm"></i> ${dict.titleQCount}`;
+            document.getElementById('descQCount').innerText = dict.descQCount;
+            document.getElementById('titleReciter').innerHTML = `<i class="fa-solid fa-microphone-lines text-goldWarm"></i> ${dict.titleReciter}`;
+            document.getElementById('descReciter').innerText = dict.descReciter;
+
+            // بناء خيارات السلكت ديناميكياً لضمان خلوها من اللغة البديلة
+            const qCountSel = document.getElementById('questionsCountSelect');
+            const qCountVal = qCountSel.value || "10";
+            qCountSel.innerHTML = `
+                <option value="5" ${qCountVal == 5 ? 'selected' : ''}>5 ${dict.qCountOption}</option>
+                <option value="10" ${qCountVal == 10 ? 'selected' : ''}>10 ${dict.qCountOption}</option>
+                <option value="15" ${qCountVal == 15 ? 'selected' : ''}>15 ${dict.qCountOption}</option>
+                <option value="20" ${qCountVal == 20 ? 'selected' : ''}>20 ${dict.qCountOption}</option>
+            `;
+
+            const reciterSel = document.getElementById('reciterSelect');
+            const reciterVal = reciterSel.value || "ar.husary";
+            reciterSel.innerHTML = `
+                <option value="ar.husary" ${reciterVal === 'ar.husary' ? 'selected' : ''}>${dict.reciterHusary}</option>
+                <option value="ar.minshawi" ${reciterVal === 'ar.minshawi' ? 'selected' : ''}>${dict.reciterMinshawi}</option>
+                <option value="ar.alafasy" ${reciterVal === 'ar.alafasy' ? 'selected' : ''}>${dict.reciterAlafasy}</option>
+                <option value="ar.abdulbasitmurattal" ${reciterVal === 'ar.abdulbasitmurattal' ? 'selected' : ''}>${dict.reciterAbduBasit}</option>
+            `;
+
+            // تحديث اختيار السور والبحث
+            document.getElementById('titleSurahs').innerHTML = `<i class="fa-solid fa-bookmark text-goldWarm"></i> ${dict.titleSurahs}`;
+            document.getElementById('descSurahs').innerText = dict.descSurahs;
+            document.getElementById('btnSelectAll').innerText = dict.btnSelectAll;
+            document.getElementById('btnClear').innerText = dict.btnClear;
+            document.getElementById('surahSearchInput').placeholder = dict.surahSearchInput;
+            document.getElementById('loadingText').innerText = dict.loadingText;
+
+            // محاذاة أيقونة البحث بناءً على الاتجاه
+            const searchIcon = document.getElementById('searchIcon');
+            if (currentLang === 'ar') {
+                searchIcon.className = "fa-solid fa-magnifying-glass absolute top-3.5 right-4 text-slate-400";
+            } else {
+                searchIcon.className = "fa-solid fa-magnifying-glass absolute top-3.5 left-4 text-slate-400";
+            }
+
+            // تحديث شريط المراجعة العائم
+            document.getElementById('widgetTitle').innerText = dict.widgetTitle;
+            document.getElementById('widgetSurahsLabel').innerText = dict.widgetSurahsLabel;
+            document.getElementById('widgetQTypesLabel').innerText = dict.widgetQTypesLabel;
+            document.getElementById('widgetCountLabel').innerText = dict.widgetCountLabel;
+            document.getElementById('btnStartQuizText').innerText = dict.btnStartQuizText;
+
+            // تحديث شاشة الاختبار والتحكم
+            document.getElementById('btnExit').innerText = dict.btnExit;
+            document.getElementById('quizHeaderTitle').innerText = dict.quizHeaderTitle;
+            document.getElementById('quizScoreText').innerText = dict.quizScoreText;
+            document.getElementById('btnNextText').innerText = dict.btnNextText;
+
+            // اتجاه السهم في زر التالي
+            const btnNextIcon = document.getElementById('btnNextIcon');
+            if (currentLang === 'ar') {
+                btnNextIcon.className = "fa-solid fa-arrow-left";
+            } else {
+                btnNextIcon.className = "fa-solid fa-arrow-right";
+            }
+
+            // تحديث شاشة النتائج
+            document.getElementById('resultsTitle').innerText = dict.resultsTitle;
+            document.getElementById('resultsDesc').innerText = dict.resultsDesc;
+            document.getElementById('cardCorrectText').innerText = dict.cardCorrectText;
+            document.getElementById('cardTotalScoreText').innerText = dict.cardTotalScoreText;
+            document.getElementById('btnRestart').innerText = dict.btnRestart;
+            document.getElementById('btnBackHome').innerText = dict.btnBackHome;
+            document.getElementById('btnMsgClose').innerText = dict.btnMsgClose;
+
+            updateReviews();
+            updateQTypesUI();
+        }
+
+        function selectTheme(theme) {
+            currentTheme = theme;
+            const appBody = document.getElementById('appBody');
+            const plainCard = document.getElementById('themeCardPlain');
+            const oceanCard = document.getElementById('themeCardOcean');
+            const oceanDecorations = document.getElementById('oceanDecorations');
+            const plainTick = document.getElementById('plainTick');
+            const oceanTick = document.getElementById('oceanTick');
+
+            if (theme === 'ocean') {
+                appBody.classList.add('theme-ocean');
+                oceanDecorations.classList.remove('hidden');
+                
+                oceanCard.classList.add('border-cyan-300');
+                oceanCard.classList.remove('border-slate-200');
+                plainCard.classList.remove('border-goldWarm');
+                plainCard.classList.add('border-slate-200');
+                
+                plainTick.classList.add('hidden');
+                oceanTick.classList.remove('hidden');
+            } else {
+                appBody.classList.remove('theme-ocean');
+                oceanDecorations.classList.add('hidden');
+                
+                plainCard.classList.add('border-goldWarm');
+                plainCard.classList.remove('border-slate-200');
+                oceanCard.classList.remove('border-cyan-300');
+                oceanCard.classList.add('border-slate-200');
+                
+                plainTick.classList.remove('hidden');
+                oceanTick.classList.add('hidden');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // جلب السور من الـ Alquran Cloud API ديناميكياً
+        // -------------------------------------------------------------
+        async function fetchSurahsFromAPI() {
+            try {
+                const response = await fetch('https://api.alquran.cloud/v1/surah');
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    allSurahsList = result.data.map(surah => ({
+                        id: surah.number,
+                        name: surah.name,
+                        englishName: surah.englishName,
+                        numberOfAyahs: surah.numberOfAyahs,
+                        revelationType: surah.revelationType
+                    }));
+                    
+                    document.getElementById('surahsLoading').classList.add('hidden');
+                    document.getElementById('surahsGrid').classList.remove('hidden');
+                    renderSurahsGrid();
+                }
+            } catch (error) {
+                console.error("Error fetching Surahs:", error);
+                const dict = translations[currentLang];
+                document.getElementById('surahsLoading').innerHTML = `
+                    <div class="text-rose-500 text-center">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+                        <p class="text-sm font-bold">${dict.errorTitle}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSurahsGrid() {
+            const grid = document.getElementById('surahsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            const dict = translations[currentLang];
+            
+            allSurahsList.forEach(surah => {
+                const isSelected = selectedSurahs.includes(surah.id);
+                const card = document.createElement('div');
+                card.id = `surah-${surah.id}`;
+                card.onclick = () => toggleSurah(surah.id);
+                card.className = `interactive-card cursor-pointer p-4 rounded-xl border ${isSelected ? 'border-goldWarm bg-amber-50/10' : 'border-slate-100 bg-white'} flex items-center justify-between text-right relative shadow-sm`;
+                
+                const displayName = currentLang === 'ar' ? surah.name : surah.englishName;
+                const secondaryLabel = currentLang === 'ar' ? `${surah.numberOfAyahs} ${dict.ayahsUnit}` : `${surah.numberOfAyahs} ${dict.ayahsUnit}`;
+                
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emeraldDeep/5 text-emeraldDeep text-xs font-bold flex items-center justify-center surah-num">
+                            ${surah.id}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-800">${displayName}</h4>
+                            <p class="text-[10px] text-slate-400">${secondaryLabel}</p>
+                        </div>
+                    </div>
+                    <div class="w-5 h-5 rounded-md border-2 ${isSelected ? 'border-goldWarm bg-goldWarm text-white' : 'border-slate-300'} flex items-center justify-center">
+                        ${isSelected ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            updateReviews();
+        }
+
+        function filterSurahs() {
+            const query = document.getElementById('surahSearchInput').value.toLowerCase();
+            allSurahsList.forEach(surah => {
+                const element = document.getElementById(`surah-${surah.id}`);
+                if (element) {
+                    const match = surah.name.includes(query) || surah.englishName.toLowerCase().includes(query);
+                    if (match) {
+                        element.classList.remove('hidden');
+                    } else {
+                        element.classList.add('hidden');
+                    }
+                }
+            });
+        }
+
+        function toggleSurah(id) {
+            const idx = selectedSurahs.indexOf(id);
+            if (idx > -1) {
+                selectedSurahs.splice(idx, 1);
+            } else {
+                selectedSurahs.push(id);
+            }
+            renderSurahsGrid();
+        }
+
+        function selectAllSurahs() {
+            selectedSurahs = allSurahsList.map(s => s.id);
+            renderSurahsGrid();
+        }
+
+        function clearAllSurahs() {
+            selectedSurahs = [];
+            renderSurahsGrid();
+        }
+
+        function toggleQuestionType(type) {
+            const idx = selectedQuestionTypes.indexOf(type);
+            const dict = translations[currentLang];
+            if (idx > -1) {
+                if (selectedQuestionTypes.length > 1) {
+                    selectedQuestionTypes.splice(idx, 1);
+                } else {
+                    showSystemMessage(dict.alertTitle, dict.alertQTypesReq, "warning");
+                }
+            } else {
+                selectedQuestionTypes.push(type);
+            }
+            updateQTypesUI();
+            updateReviews();
+        }
+
+        function updateQTypesUI() {
+            const types = ['flashcards', 'listen_match', 'fill_blank', 'order_words'];
+            types.forEach(type => {
+                const card = document.getElementById(`card-${type}`);
+                if (!card) return;
+                const isSelected = selectedQuestionTypes.includes(type);
+                const indicator = card.querySelector('.checkbox-indicator');
+                
+                if (isSelected) {
+                    card.classList.add('border-goldWarm', 'bg-amber-50/10');
+                    indicator.classList.add('bg-goldWarm', 'border-goldWarm');
+                } else {
+                    card.classList.remove('border-goldWarm', 'bg-amber-50/10');
+                    indicator.classList.remove('bg-goldWarm', 'border-goldWarm');
+                }
+            });
+        }
+
+        function updateReviews() {
+            const dict = translations[currentLang];
+            const surahsCount = selectedSurahs.length;
+            const qTypesCount = selectedQuestionTypes.length;
+            const totalCount = document.getElementById('questionsCountSelect').value || 10;
+
+            document.getElementById('widgetSurahsCount').innerText = `${surahsCount} ${surahsCount === 1 ? (currentLang === 'ar' ? 'سورة' : 'Surah') : (currentLang === 'ar' ? 'سورة' : 'Surahs')}`;
+            document.getElementById('widgetQTypesCount').innerText = `${qTypesCount} ${currentLang === 'ar' ? 'أنواع' : 'Styles'}`;
+            document.getElementById('widgetTotalCount').innerText = `${totalCount} ${currentLang === 'ar' ? 'أسئلة' : 'Questions'}`;
+        }
+
+        // -------------------------------------------------------------
+        // محرك توليد الاختبار الذكي حياً من الـ API والـ JSON
+        // -------------------------------------------------------------
+        async function startQuiz() {
+            const dict = translations[currentLang];
+            if (selectedSurahs.length === 0) {
+                showSystemMessage(dict.alertTitle, dict.alertSurahReq, "warning");
+                return;
+            }
+
+            document.getElementById('floatingReviewWidget').classList.add('opacity-40', 'pointer-events-none');
+            
+            try {
+                const reciter = document.getElementById('reciterSelect').value;
+                const totalQuestionsLimit = parseInt(document.getElementById('questionsCountSelect').value);
+                
+                showSystemMessage(dict.loaderTitle, dict.loaderDesc, "info");
+
+                const ayahPool = [];
+                const fetchPromises = selectedSurahs.map(id => 
+                    fetch(`https://api.alquran.cloud/v1/surah/${id}/${reciter}`)
+                        .then(r => r.json())
+                );
+                
+                const responses = await Promise.all(fetchPromises);
+                
+                responses.forEach(res => {
+                    if (res.code === 200) {
+                        res.data.ayahs.forEach(ayah => {
+                            ayahPool.push({
+                                numInSurah: ayah.numberInSurah,
+                                text: ayah.text,
+                                audio: ayah.audio,
+                                surahName: res.data.name,
+                                surahEnglishName: res.data.englishName,
+                                surahId: res.data.number
+                            });
+                        });
+                    }
+                });
+
+                if (ayahPool.length < 5) {
+                    throw new Error("Not enough verses fetched.");
+                }
+
+                quizQuestions = [];
+                const shuffledAyahs = shuffleArray([...ayahPool]);
+                const questionsToGenerate = Math.min(totalQuestionsLimit, shuffledAyahs.length);
+
+                for (let i = 0; i < questionsToGenerate; i++) {
+                    const chosenAyah = shuffledAyahs[i];
+                    const questionType = selectedQuestionTypes[Math.floor(Math.random() * selectedQuestionTypes.length)];
+                    
+                    const distractors = [];
+                    const poolForDistractors = shuffledAyahs.filter(a => a.text !== chosenAyah.text);
+                    const shuffledDistractors = shuffleArray(poolForDistractors);
+                    
+                    for (let j = 0; j < Math.min(3, shuffledDistractors.length); j++) {
+                        distractors.push(shuffledDistractors[j].text);
+                    }
+
+                    quizQuestions.push({
+                        type: questionType,
+                        ayahText: chosenAyah.text,
+                        correctAudio: chosenAyah.audio,
+                        correctSurah: chosenAyah.surahName,
+                        correctSurahEnglish: chosenAyah.surahEnglishName,
+                        ayahNum: chosenAyah.numInSurah,
+                        surahId: chosenAyah.surahId,
+                        distractors: distractors
+                    });
+                }
+
+                currentQuestionIndex = 0;
+                score = 0;
+                isQuestionAnswered = false;
+                document.getElementById('liveScore').innerText = score;
+                
+                closeMessageOverlay();
+                document.getElementById('floatingReviewWidget').classList.remove('opacity-40', 'pointer-events-none');
+                
+                document.getElementById('quizScreen').classList.remove('hidden');
+                loadQuestion(0);
+
+            } catch (error) {
+                console.error("Quiz Generation Error:", error);
+                document.getElementById('floatingReviewWidget').classList.remove('opacity-40', 'pointer-events-none');
+                showSystemMessage(dict.errorTitle, dict.errorDesc, "error");
+            }
+        }
+
+        function loadQuestion(index) {
+            if (index >= quizQuestions.length) {
+                showQuizCelebrationResults();
+                return;
+            }
+
+            const dict = translations[currentLang];
+            currentQuestionIndex = index;
+            isQuestionAnswered = false;
+            
+            document.getElementById('nextQuestionBtn').disabled = true;
+            document.getElementById('nextQuestionBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            const progressPercentage = ((index) / quizQuestions.length) * 100;
+            document.getElementById('quizGlobalProgress').style.width = `${progressPercentage}%`;
+            
+            const indicatorText = currentLang === 'ar' ? `سؤال ${index + 1} من ${quizQuestions.length}` : `Question ${index + 1} of ${quizQuestions.length}`;
+            document.getElementById('questionStepIndicator').innerText = indicatorText;
+
+            const q = quizQuestions[index];
+            const contentDiv = document.getElementById('questionContent');
+            contentDiv.innerHTML = '';
+
+            document.getElementById('questionTypeIndicator').innerText = getQuestionTypeLabel(q.type);
+
+            const audioEl = document.getElementById('ayahAudio');
+            audioEl.src = q.correctAudio;
+            audioEl.load();
+
+            const audioBtn = document.getElementById('audioPlaybackBtn');
+            const audioHint = document.getElementById('audioPlaybackHint');
+            audioHint.innerText = dict.audioPlaybackHint;
+            
+            if (q.type === 'listen_match' || q.type === 'flashcards') {
+                audioBtn.classList.remove('hidden');
+                audioHint.classList.remove('hidden');
+                setTimeout(() => { playCurrentAyah(); }, 600);
+            } else {
+                audioBtn.classList.add('hidden');
+                audioHint.classList.add('hidden');
+            }
+
+            if (q.type === 'flashcards') {
+                renderFlashcardsQuestion(q, contentDiv);
+            } else if (q.type === 'listen_match') {
+                renderListenMatchQuestion(q, contentDiv);
+            } else if (q.type === 'fill_blank') {
+                renderFillBlankQuestion(q, contentDiv);
+            } else if (q.type === 'order_words') {
+                renderOrderWordsQuestion(q, contentDiv);
+            }
+        }
+
+        function getQuestionTypeLabel(type) {
+            const dict = translations[currentLang];
+            const labels = {
+                flashcards: dict.labelFlashcard,
+                listen_match: dict.labelListenMatch,
+                fill_blank: dict.labelFillBlank,
+                order_words: dict.labelOrderWords
+            };
+            return labels[type] || '';
+        }
+
+        // -------------------------------------------------------------
+        // معالجة ورسم مكونات الأسئلة التفاعلية بلغة واحدة متكاملة
+        // -------------------------------------------------------------
+        function renderFlashcardsQuestion(q, container) {
+            const dict = translations[currentLang];
+            const labelTitle = currentLang === 'ar' ? q.correctSurah : q.correctSurahEnglish;
+            const textNumUnit = currentLang === 'ar' ? `آية ${q.ayahNum}` : `Ayah ${q.ayahNum}`;
+            const secondaryDetail = `${labelTitle} • ${textNumUnit}`;
+
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center">
+                    <p class="text-xs text-slate-400 mb-4">${currentLang === 'ar' ? 'انقر على البطاقة أدناه لتكتشف سورة الآية الكريمة وتفاصيلها!' : 'Click the card below to discover the Surah details of the verse!'}</p>
+                    
+                    <div onclick="flipFlashcard()" class="w-full max-w-sm h-72 cursor-pointer relative perspective-1000 mb-6">
+                        <div id="flashcardInner" class="flip-card-inner w-full h-full relative transition-all duration-500 shadow-lg rounded-2xl border border-slate-200">
+                            <!-- الوجه الأمامي للبطاقة -->
+                            <div class="flip-card-front absolute inset-0 w-full h-full bg-emeraldDeep text-white rounded-2xl p-6 flex flex-col justify-between items-center text-center">
+                                <span class="text-xs text-goldWarm font-bold bg-white/10 px-3 py-1 rounded-full">${dict.flashcardFront}</span>
+                                <p class="text-lg font-bold leading-relaxed font-cairo text-cyan-50">"${q.ayahText}"</p>
+                                <div class="text-xs text-slate-300">${dict.flashcardFlipHint} <i class="fa-solid fa-rotate-left ml-1"></i></div>
+                            </div>
+                            
+                            <!-- الوجه الخلفي للبطاقة -->
+                            <div class="flip-card-back absolute inset-0 w-full h-full bg-white text-slate-800 rounded-2xl p-6 flex flex-col justify-between items-center text-center">
+                                <span class="text-xs text-emeraldDeep font-bold bg-emeraldDeep/10 px-3 py-1 rounded-full">${dict.flashcardBack}</span>
+                                <div>
+                                    <h4 class="font-bold text-lg text-goldWarm font-cairo mb-1">${labelTitle}</h4>
+                                    <p class="text-xs text-slate-400">${secondaryDetail}</p>
+                                </div>
+                                
+                                <!-- منطقة التفسير التفاعلية الحية من موقع Quran.com -->
+                                <div id="tafsirContent" class="text-xs text-slate-600 leading-relaxed max-h-28 overflow-y-auto w-full px-2">
+                                    <div class="animate-pulse space-y-2 py-1">
+                                        <div class="h-2 bg-slate-200 rounded w-full"></div>
+                                        <div class="h-2 bg-slate-200 rounded w-5/6"></div>
+                                        <div class="h-2 bg-slate-200 rounded w-4/5"></div>
+                                    </div>
+                                </div>
+
+                                <div class="text-[10px] text-slate-400">${dict.flashcardFlipHint}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 w-full max-w-sm">
+                        <button onclick="answerFlashcard(true)" class="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i> ${dict.flashcardGotIt}
+                        </button>
+                        <button onclick="answerFlashcard(false)" class="flex-1 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation"></i> ${dict.flashcardReview}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function flipFlashcard() {
+            const cardInner = document.getElementById('flashcardInner');
+            cardInner.classList.toggle('flip-card-flipped');
+            if (cardInner.classList.contains('flip-card-flipped')) {
+                loadTafsirForCurrentQuestion();
+            }
+        }
+
+        async function loadTafsirForCurrentQuestion() {
+            const q = quizQuestions[currentQuestionIndex];
+            const tafsirContainer = document.getElementById('tafsirContent');
+            if (!tafsirContainer) return;
+            
+            // في حال تم تحميل التفسير مسبقاً لا نقوم بإعادة جلبه
+            if (q.tafsirText) {
+                tafsirContainer.innerHTML = `<p class="text-xs text-slate-600 leading-relaxed font-cairo">"${q.tafsirText}"</p>`;
+                return;
+            }
+            
+            const loadingHtml = currentLang === 'ar' ? 
+                `<div class="animate-pulse space-y-2 py-2 text-center text-slate-400 text-xs">جاري جلب التفسير الميسر من Quran.com...</div>` :
+                `<div class="animate-pulse space-y-2 py-2 text-center text-slate-400 text-xs">Loading English translation/explanation from Quran.com...</div>`;
+            tafsirContainer.innerHTML = loadingHtml;
+            
+            try {
+                let tafsirText = "";
+                if (currentLang === 'ar') {
+                    // جلب التفسير الميسر (تفسير 169 في واجهة Quran.com)
+                    const res = await fetch(`https://api.quran.com/api/v4/tafsirs/169/by_ayah/${q.surahId}:${q.ayahNum}`);
+                    const data = await res.json();
+                    if (data && data.tafsir && data.tafsir.text) {
+                        tafsirText = data.tafsir.text.replace(/<\/?[^>]+(>|$)/g, ""); // تنظيف وسوم الـ HTML
+                    } else {
+                        tafsirText = translations[currentLang].flashcardBackExplanation;
+                    }
+                } else {
+                    // جلب ترجمة المعاني البسيطة والميسرة Mustafa Khattab "The Clear Quran" (ترجمة 131)
+                    const res = await fetch(`https://api.quran.com/api/v4/verses/by_key/${q.surahId}:${q.ayahNum}?translations=131`);
+                    const data = await res.json();
+                    if (data && data.verse && data.verse.translations && data.verse.translations[0]) {
+                        tafsirText = data.verse.translations[0].text.replace(/<\/?[^>]+(>|$)/g, ""); // تنظيف وسوم الـ HTML
+                    } else {
+                        tafsirText = translations[currentLang].flashcardBackExplanation;
+                    }
+                }
+                
+                q.tafsirText = tafsirText;
+                tafsirContainer.innerHTML = `<p class="text-xs text-slate-600 leading-relaxed font-cairo">"${tafsirText}"</p>`;
+            } catch (error) {
+                console.error("Error fetching Tafsir:", error);
+                tafsirContainer.innerHTML = `<p class="text-xs text-slate-500 leading-relaxed">"${translations[currentLang].flashcardBackExplanation}"</p>`;
+            }
+        }
+
+        function answerFlashcard(isCorrect) {
+            if (isQuestionAnswered) return;
+            isQuestionAnswered = true;
+            
+            const dict = translations[currentLang];
+            if (isCorrect) {
+                score++;
+                document.getElementById('liveScore').innerText = score;
+                showSystemMessage(dict.flashcardSuccessTitle, dict.flashcardSuccessDesc, "success");
+            } else {
+                showSystemMessage(dict.flashcardWarningTitle, dict.flashcardWarningDesc, "warning");
+            }
+            enableNextBtn();
+        }
+
+        function renderListenMatchQuestion(q, container) {
+            const dict = translations[currentLang];
+            const choices = shuffleArray([q.ayahText, ...q.distractors]);
+            
+            let choicesHTML = '';
+            choices.forEach((choice, index) => {
+                choicesHTML += `
+                    <button onclick="verifyListenMatch('${escapeQuote(choice)}', this)" class="w-full text-right p-4 rounded-2xl border border-slate-200 bg-white text-slate-800 hover:border-goldWarm font-bold text-sm leading-relaxed transition flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs shrink-0">${index + 1}</div>
+                        <div class="flex-1">${choice}</div>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="flex flex-col gap-4">
+                    <div class="text-center py-4 bg-emeraldDeep/5 rounded-2xl mb-2 flex flex-col items-center justify-center">
+                        <div class="w-14 h-14 bg-emeraldDeep text-goldWarm rounded-full flex items-center justify-center text-xl cursor-pointer animate-pulse mb-2" onclick="playCurrentAyah()">
+                            <i class="fa-solid fa-play"></i>
+                        </div>
+                        <p class="text-xs text-slate-500">${dict.listenMatchHelper}</p>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        ${choicesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function verifyListenMatch(selectedText, element) {
+            if (isQuestionAnswered) return;
+            isQuestionAnswered = true;
+
+            const q = quizQuestions[currentQuestionIndex];
+            const isCorrect = selectedText.trim() === q.ayahText.trim();
+            const dict = translations[currentLang];
+            
+            if (isCorrect) {
+                score++;
+                document.getElementById('liveScore').innerText = score;
+                element.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-700');
+                element.querySelector('div').classList.add('bg-emerald-500', 'text-white');
+                showSystemMessage(dict.genericCorrectTitle, dict.genericCorrectDesc, "success");
+            } else {
+                element.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-700');
+                element.querySelector('div').classList.add('bg-rose-500', 'text-white');
+                showSystemMessage(dict.genericWrongTitle, dict.genericWrongDesc, "error");
+            }
+            enableNextBtn();
+        }
+
+        function renderFillBlankQuestion(q, container) {
+            const dict = translations[currentLang];
+            const words = q.ayahText.split(' ');
+            
+            let targetWordIndex = Math.floor(Math.random() * (words.length - 2)) + 1;
+            if (words.length <= 2) targetWordIndex = 0;
+            
+            const targetWord = words[targetWordIndex].replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            
+            const maskedWords = [...words];
+            maskedWords[targetWordIndex] = `<span class="px-4 py-1 bg-amber-100 border-b-2 border-goldWarm text-slate-800 rounded-lg font-black font-cairo">...........</span>`;
+            const maskedSentence = maskedWords.join(' ');
+
+            const wrongWords = ["سماوات", "حكيماً", "الناس", "مبيناً", "عليماً", "العظيم", "الأرض", "الرحيم"];
+            const choices = shuffleArray([
+                targetWord, 
+                ...shuffleArray(wrongWords.filter(w => w !== targetWord)).slice(0, 3)
+            ]);
+
+            let choicesHTML = '';
+            choices.forEach((choice) => {
+                choicesHTML += `
+                    <button onclick="verifyFillBlank('${escapeQuote(choice)}', '${escapeQuote(targetWord)}', this)" class="flex-1 py-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-800 font-bold hover:border-goldWarm text-sm transition text-center shadow-sm font-cairo">
+                        ${choice}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="flex flex-col gap-6 text-center">
+                    <p class="text-xs text-slate-400">${dict.fillBlankHelper}</p>
+                    <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100 font-bold text-lg leading-loose font-cairo text-slate-700">
+                        "${maskedSentence}"
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${choicesHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function verifyFillBlank(selected, target, element) {
+            if (isQuestionAnswered) return;
+            isQuestionAnswered = true;
+
+            const isCorrect = selected.trim() === target.trim();
+            const dict = translations[currentLang];
+            
+            if (isCorrect) {
+                score++;
+                document.getElementById('liveScore').innerText = score;
+                element.classList.add('bg-emerald-500', 'border-emerald-500', 'text-white');
+                showSystemMessage(dict.genericCorrectTitle, dict.genericCorrectDesc, "success");
+            } else {
+                element.classList.add('bg-rose-500', 'border-rose-500', 'text-white');
+                showSystemMessage(dict.genericWrongTitle, `${dict.genericWrongDesc} ${dict.fillBlankWrongDesc} "${target}"`, "error");
+            }
+            enableNextBtn();
+        }
+
+        function renderOrderWordsQuestion(q, container) {
+            const dict = translations[currentLang];
+            const originalWords = q.ayahText.split(' ').map(w => w.trim());
+            const shuffledWords = shuffleArray([...originalWords]);
+
+            let shuffledHTML = '';
+            shuffledWords.forEach((word) => {
+                shuffledHTML += `
+                    <button onclick="selectOrderWord(this, '${escapeQuote(word)}')" class="py-2.5 px-4 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl font-semibold text-sm hover:border-goldWarm transition text-center shadow-sm font-cairo">
+                        ${word}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="flex flex-col gap-6">
+                    <p class="text-xs text-slate-400 text-center">${dict.orderWordsHelper}</p>
+                    
+                    <div id="sentenceProgressContainer" class="p-5 bg-emeraldDeep/5 rounded-2xl border border-emeraldDeep/10 min-h-20 flex flex-wrap gap-2 items-center justify-center font-bold text-base leading-relaxed text-emeraldDeep font-cairo">
+                        <span class="text-slate-400 text-xs italic" id="emptySentenceHint">${dict.orderWordsHint}</span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 justify-center" id="shuffledWordsContainer">
+                        ${shuffledHTML}
+                    </div>
+
+                    <button onclick="submitOrderWords()" id="btnSubmitOrder" class="w-full py-3 bg-goldWarm text-white font-extrabold rounded-xl hover:bg-goldWarm/90 transition shadow-md opacity-40 cursor-not-allowed" disabled>
+                        ${dict.orderWordsCheck}
+                    </button>
+                </div>
+            `;
+        }
+
+        let userSentenceWords = [];
+
+        function selectOrderWord(button, word) {
+            if (isQuestionAnswered) return;
+            
+            const hint = document.getElementById('emptySentenceHint');
+            if (hint) hint.remove();
+
+            const dict = translations[currentLang];
+
+            if (button.classList.contains('bg-emeraldDeep')) {
+                button.classList.remove('bg-emeraldDeep', 'text-white', 'border-emeraldDeep');
+                button.classList.add('bg-slate-50', 'border-slate-200', 'text-slate-700');
+                
+                const index = userSentenceWords.indexOf(word);
+                if (index > -1) userSentenceWords.splice(index, 1);
+            } else {
+                button.classList.add('bg-emeraldDeep', 'text-white', 'border-emeraldDeep');
+                button.classList.remove('bg-slate-50', 'border-slate-200', 'text-slate-700');
+                userSentenceWords.push(word);
+            }
+
+            const container = document.getElementById('sentenceProgressContainer');
+            if (userSentenceWords.length === 0) {
+                container.innerHTML = `<span class="text-slate-400 text-xs italic" id="emptySentenceHint">${dict.orderWordsHint}</span>`;
+                document.getElementById('btnSubmitOrder').disabled = true;
+                document.getElementById('btnSubmitOrder').classList.add('opacity-40', 'cursor-not-allowed');
+            } else {
+                container.innerHTML = userSentenceWords.map(w => `<span class="bg-white px-3 py-1.5 rounded-lg border border-emeraldDeep/10 font-bold text-sm text-emeraldDeep font-cairo shadow-sm">${w}</span>`).join('');
+                document.getElementById('btnSubmitOrder').disabled = false;
+                document.getElementById('btnSubmitOrder').classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+        }
+
+        function submitOrderWords() {
+            if (isQuestionAnswered) return;
+            isQuestionAnswered = true;
+
+            const q = quizQuestions[currentQuestionIndex];
+            const originalText = q.ayahText.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            const userText = userSentenceWords.join(' ').trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+            
+            const isCorrect = userText === originalText;
+            const dict = translations[currentLang];
+
+            if (isCorrect) {
+                score++;
+                document.getElementById('liveScore').innerText = score;
+                showSystemMessage(dict.genericCorrectTitle, dict.genericCorrectDesc, "success");
+            } else {
+                showSystemMessage(dict.genericWrongTitle, `${dict.genericWrongDesc} ${dict.correctOrderIs} "${q.ayahText}"`, "error");
+            }
+
+            userSentenceWords = [];
+            enableNextBtn();
+        }
+
+        // -------------------------------------------------------------
+        // التحكم التلقائي بالملفات الصوتية
+        // -------------------------------------------------------------
+        function playCurrentAyah() {
+            const audio = document.getElementById('ayahAudio');
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play();
+            }
+        }
+
+        function enableNextBtn() {
+            const nextBtn = document.getElementById('nextQuestionBtn');
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function loadNextQuestion() {
+            if (!isQuestionAnswered) return;
+            currentQuestionIndex++;
+            loadQuestion(currentQuestionIndex);
+        }
+
+        // -------------------------------------------------------------
+        // صناديق التنبيهات ونوافذ التأكيد التفاعلية المخصصة
+        // -------------------------------------------------------------
+        function showSystemMessage(title, text, type = "success") {
+            const overlay = document.getElementById('messageOverlay');
+            const icon = document.getElementById('messageIcon');
+            const titleEl = document.getElementById('messageTitle');
+            const textEl = document.getElementById('messageText');
+
+            titleEl.innerText = title;
+            textEl.innerText = text;
+
+            if (type === "success") {
+                icon.className = "w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 mx-auto flex items-center justify-center text-3xl mb-4";
+                icon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+            } else if (type === "warning") {
+                icon.className = "w-16 h-16 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center text-3xl mb-4";
+                icon.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i>`;
+            } else if (type === "error") {
+                icon.className = "w-16 h-16 rounded-full bg-rose-50 text-rose-500 mx-auto flex items-center justify-center text-3xl mb-4";
+                icon.innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
+            } else {
+                icon.className = "w-16 h-16 rounded-full bg-cyan-50 text-cyan-500 mx-auto flex items-center justify-center text-3xl mb-4";
+                icon.innerHTML = `<i class="fa-solid fa-circle-info"></i>`;
+            }
+
+            overlay.classList.remove('hidden');
+        }
+
+        function closeMessageOverlay() {
+            document.getElementById('messageOverlay').classList.add('hidden');
+        }
+
+        // بديل نافذة الـ Confirm التقليدية لإنهاء الاختبار
+        function exitQuizPrompt() {
+            const dict = translations[currentLang];
+            document.getElementById('confirmTitle').innerText = dict.confirmTitle;
+            document.getElementById('confirmText').innerText = dict.confirmText;
+            document.getElementById('btnConfirmYes').innerText = dict.btnConfirmYes;
+            document.getElementById('btnConfirmNo').innerText = dict.btnConfirmNo;
+
+            document.getElementById('confirmOverlay').classList.remove('hidden');
+        }
+
+        function confirmExitAction(shouldExit) {
+            document.getElementById('confirmOverlay').classList.add('hidden');
+            if (shouldExit) {
+                document.getElementById('quizScreen').classList.add('hidden');
+                initApp();
+            }
+        }
+
+        function showQuizCelebrationResults() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('celebrationScreen').classList.remove('hidden');
+
+            document.getElementById('celebrationCorrectCount').innerText = `${score} / ${quizQuestions.length}`;
+            const percentage = Math.round((score / quizQuestions.length) * 100);
+            document.getElementById('celebrationPercentage').innerText = `${percentage}%`;
+        }
+
+        function exitQuizToHome() {
+            document.getElementById('celebrationScreen').classList.add('hidden');
+            initApp();
+        }
+
+        function restartSettings() {
+            document.getElementById('celebrationScreen').classList.add('hidden');
+            startQuiz();
+        }
+
+        // -------------------------------------------------------------
+        // خوارزميات مساعدة (الترتيب العشوائي والنصوص)
+        // -------------------------------------------------------------
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function escapeQuote(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+      }
+    </script>
+  
+</body>
+</html>
